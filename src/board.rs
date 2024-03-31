@@ -14,6 +14,7 @@ pub struct Board {
 impl Board {
     pub fn new(level: Vec<&str>) -> Self {
         let height: u8 = level.len() as u8;
+        assert!(height > 0);
         let width: u8 = level[0].len() as u8;
         let d = level
             .into_iter()
@@ -23,7 +24,7 @@ impl Board {
             data: d,
             height,
             width,
-            allow_diagonal: false,
+            allow_diagonal: true,
         }
     }
     pub fn print(&self, _mover: Option<u8>) {
@@ -40,7 +41,7 @@ impl Board {
             .map(|(x, y)| (pos.0 + x, pos.1 + y))
             .collect();
 
-        println!("----> {:?}", frame);
+        // println!("----> {:?}", frame);
 
         frame
             .into_iter()
