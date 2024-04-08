@@ -4,13 +4,13 @@ type LevelSketch = [&'static str; 7];
 
 #[rustfmt::skip]
 const LEVEL_1: LevelSketch = [
-                                ":...:.:.:...",
-                                "...:.:....:.",
-                                ".::..:::....",
-                                "..:.i...:...",
-                                "...:..::..:.",
-                                "...::.:...:.",
-                                "...:...i..:.",
+                                ":...:.......:...",
+                                ".........:....:.",
+                                ".::.......::....",
+                                "..:.....i...:...",
+                                "...:..:....:..:.",
+                                "...::.:.......:.",
+                                "...:.......i..:.",
                              ];
 
 mod board;
@@ -23,11 +23,14 @@ use board::*;
 // ---------------------------
 fn main() {
     let l1 = LEVEL_1.to_vec();
-    let b1 = Board::new(l1);
+    let b1 = Board::new(l1, true);
+
+    println!("{:?}", b1.moveable_directions); // not smart enuff !
     b1.print(None);
 
-    let start = Pos(2, 0);
-    let goal = Pos(10, 6);
+    let start = Pos(2, 0); // print cannot handle negative direction !
+    let goal = Pos(13, 6);
+
     let result = bfs(
         &start,
         |p| {
@@ -39,4 +42,5 @@ fn main() {
         |p| *p == goal,
     );
     println!("{:?}", result);
+    b1.print(result);
 }

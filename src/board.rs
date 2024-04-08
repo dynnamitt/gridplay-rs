@@ -8,11 +8,11 @@ pub struct Board {
     pub width: u8,
     pub height: u8,
     pub data: Vec<Vec<u8>>,
-    pub allow_diagonal: bool,
+    pub moveable_directions: Vec<(i16, i16)>,
 }
 
 impl Board {
-    pub fn new(level: Vec<&str>) -> Self {
+    pub fn new(level: Vec<&str>, move_diagonal: bool) -> Self {
         let height: u8 = level.len() as u8;
         assert!(height > 0);
         let width: u8 = level[0].len() as u8;
@@ -24,20 +24,38 @@ impl Board {
             data: d,
             height,
             width,
-            allow_diagonal: true,
+            moveable_directions: rel_frame(move_diagonal),
         }
     }
-    pub fn print(&self, _mover: Option<u8>) {
-        for line in &self.data {
-            println!("{}", str::from_utf8(line).unwrap());
+    pub fn print(&self, mover: Option<Vec<Pos>>) {
+        for (y, board_line) in self.data.iter().enumerate() {
+            let board_line = str::from_utf8(board_line).unwrap();
+
+            if let Some(ref ps) = mover {
+                let ps = ps.iter().filter(|Pos(_mx, my)| *my == y as i16);
+                let mut prev_mx: usize = 0;
+                for Pos(mx, _my) in ps {
+                    // lets hope it is sorted..
+                    let mx = *mx as usize;
+                    print!("{}", &board_line[prev_mx..mx]);
+                    print!("X");
+                    prev_mx = mx + 1;
+                }
+                if prev_mx < self.width as usize {
+                    println!("{}", &board_line[prev_mx..self.width as usize]);
+                } else {
+                    println!();
+                }
+            } else {
+                println!("{}", &board_line);
+            }
         }
     }
 
     pub fn successors(&self, pos: &Pos) -> Vec<Successor> {
-        let grid = (-1i16..=1).cartesian_product(-1i16..=1);
-
-        let frame: Vec<(i16, i16)> = grid
-            .filter(|pair| *pair != (0, 0)) // start-pos is not useful, discard
+        let frame: Vec<_> = self
+            .moveable_directions
+            .iter()
             .map(|(x, y)| (pos.0 + x, pos.1 + y))
             .collect();
 
@@ -58,6 +76,21 @@ impl Board {
     }
     fn ok_row(&self, y: &i16) -> bool {
         *y >= 0 && *y < self.height.into()
+    }
+}
+
+fn rel_frame(move_diagonal: bool) -> Vec<(i16, i16)> {
+    match move_diagonal {
+        true =>
+        // 9 pairs
+        // minus s tart-pos, discard
+        {
+            (-1i16..=1)
+                .cartesian_product(-1i16..=1)
+                .filter(|pair| *pair != (0, 0))
+                .collect()
+        }
+        false => [(0, -1), (-1, 0), (1, 0), (1, 1)].to_vec(),
     }
 }
 
@@ -88,13 +121,13 @@ mod tests {
                              ];
     #[test]
     fn board_size() {
-        let b = Board::new(LEVEL_0.to_vec());
+        let b = Board::new(LEVEL_0.to_vec(), true);
         assert_eq!(b.width, 4);
         assert_eq!(b.height, 4);
     }
     #[test]
     fn succ_corners() {
-        let b = Board::new(LEVEL_0.to_vec());
+        let b = Board::new(LEVEL_0.to_vec(), true);
         let max_row: i16 = b.height as i16 - 1;
         let max_col: i16 = b.width as i16 - 1;
         let lt = b.successors(&Pos(0, 0));
@@ -108,7 +141,7 @@ mod tests {
     }
     #[test]
     fn succ_1_1() {
-        let b = Board::new(LEVEL_0.to_vec());
+        let b = Board::new(LEVEL_0.to_vec(), true);
         let p1_1 = b.successors(&Pos(1, 1));
         // println!("{:?}", p1_1);
         assert_eq!(p1_1.len(), 8, "frame col cnt");
