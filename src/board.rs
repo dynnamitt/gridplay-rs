@@ -4,6 +4,7 @@ use std::str;
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Pos(pub i16, pub i16);
 
+#[derive(Debug)]
 pub struct Board {
     pub width: u8,
     pub height: u8,
@@ -24,7 +25,7 @@ impl Board {
             data: d,
             height,
             width,
-            moveable_directions: rel_frame(move_diagonal),
+            moveable_directions: surroundings(move_diagonal),
         }
     }
     pub fn print(&self, mover: Option<Vec<Pos>>) {
@@ -79,7 +80,7 @@ impl Board {
     }
 }
 
-fn rel_frame(move_diagonal: bool) -> Vec<(i16, i16)> {
+fn surroundings(move_diagonal: bool) -> Vec<(i16, i16)> {
     match move_diagonal {
         true =>
         // 9 pairs
@@ -125,6 +126,16 @@ mod tests {
         assert_eq!(b.width, 4);
         assert_eq!(b.height, 4);
     }
+    #[test]
+    fn succ_no_diag() {
+        let b = Board::new(LEVEL_0.to_vec(), false);
+
+        assert_eq!(4, b.moveable_directions.len());
+
+        let s00 = b.successors(&Pos(0, 0));
+        assert_eq!(2, s00.len());
+    }
+
     #[test]
     fn succ_corners() {
         let b = Board::new(LEVEL_0.to_vec(), true);
